@@ -85,6 +85,19 @@ function createSeries(callbacks) {
     };
 }
 
+/**
+ * Passes the request through available middleware
+ * @param {XMLHttpRequest} request An xhr object prior to being sent
+ */
+function handleMiddleware(request) {
+    var series;
+    var mw = this.middleware = this.middleware || [];
+
+    series = createSeries(mw);
+
+    series(request);
+}
+
 /********************
  *  Public Methods  *
  ********************/
