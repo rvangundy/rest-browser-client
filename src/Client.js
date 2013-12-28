@@ -137,13 +137,24 @@ function use(/* arguments */) {
  * @param {String} path The path to the API based on this client's base URL
  */
 function get(/* arguments */) {
-    var url      = this.url + arguments[0];
-    var callback = createSeries(slice.call(arguments, 1));
-    var request  = amendRequest(new XMLHttpRequest(), url);
-    var username = this.username;
-    var password = this.password;
+    var series;
+    var callbacks = [];
+    var url       = this.url;
+    var request   = amendRequest(new XMLHttpRequest(), url);
+    var username  = this.username;
+    var password  = this.password;
 
-    // Use authentication if available
+    // Sort arguments in to paths and callbacks
+    for (var i = 0, len = arguments.length; i < len; i += 1) {
+        if (typeof arguments[i] === 'string') { url += arguments[i]; }
+        else { callbacks.push(arguments[i]); }
+    }
+
+    // Add an error handler and create a series call
+    callbacks.splice(0, errorHandler);
+    series = createSeries(callbacks);
+
+    // Open the request, using authentication if available
     if (username && password) {
         request.open('GET', url, true, username, password);
     } else {
@@ -151,15 +162,11 @@ function get(/* arguments */) {
     }
 
     // Pass through available middleware
-    if (this.middleware) { this.middleware(request); }
+    handleMiddleware.call(this, request);
 
     request.onreadystatechange = function() {
         if (request.readyState === 4) {
-            if (request.status === 200) {
-                callback(request);
-            } else {
-                this.handleStatus(request);
-            }
+            series(request);
         }
     }.bind(this);
 
