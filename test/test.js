@@ -13,11 +13,14 @@ describe('Client', function () {
             client.get(function(req) {
                 assert.equal(req.response, 'test');
                 ok();
+            });
         });
 
         it('Calls error middleware', function(ok) {
             var message = 'some error';
+            var client = rest('http://localhost:8000');
 
+            client.get('/error', function(err) {
                 assert.equal(err.status, 404);
                 ok();
             });
@@ -26,6 +29,7 @@ describe('Client', function () {
 
     describe('use', function() {
         it('Calls middleware when sending a request', function(ok) {
+            var client = rest('http://localhost:8000');
             client.use(function() {
                 assert.ok(true);
                 ok();
