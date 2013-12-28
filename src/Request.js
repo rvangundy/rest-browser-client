@@ -32,6 +32,15 @@ function get(key) {
     return this.getResponseHeader(key);
 }
 
+/**
+ * Returns the specified header property
+ * @param {String} key   The key associated with a header
+ * @param {String} value The header value
+ */
+function set(key, value) {
+    this.setRequestHeader(key, value);
+}
+
 /*****************
  *  Constructor  *
  *****************/
@@ -56,6 +65,7 @@ function Request(request, url) {
 
 Request.prototype = {
     get  : get,
+    set  : set,
     path : null
 };
 
