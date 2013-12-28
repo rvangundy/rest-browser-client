@@ -98,6 +98,18 @@ function handleMiddleware(request) {
     series(request);
 }
 
+/**
+ * Checks the status of the request and generates an error if not 200.
+ * @param {XMLHttpRequest} req An xhr object
+ */
+function errorHandler(req, next) {
+    if (req.readyState === 4 && request.status >= 400) {
+        next(req.statusText);
+    } else {
+        next();
+    }
+}
+
 /********************
  *  Public Methods  *
  ********************/
