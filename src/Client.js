@@ -191,7 +191,6 @@ Client.prototype = {
     use           : use,
     get           : get,
     middleware    : null,
-    base          : null,
     url           : null,
     username      : null,
     password      : null
