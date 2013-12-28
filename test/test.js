@@ -1,11 +1,17 @@
 'use strict';
 
-var module = require('../src/rest-client');
+var rest   = require('../src/rest-client');
 var assert = chai.assert;
 
-describe('Your Module', function () {
+require('./shim-function.bind');
 
-    it('is a module', function () {
-        assert.ok(true);
+describe('Client', function () {
+    var client = rest('http://localhost:8000');
+
+    it('performs a basic get operation', function (ok) {
+        client.get('', function(req) {
+            assert.equal(req.response, 'test');
+            ok();
+        });
     });
 });

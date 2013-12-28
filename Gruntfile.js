@@ -39,19 +39,50 @@ module.exports = function (grunt) {
                 gitDescribeOptions : '--tags --always --abbrev=1 --dirty=-d'
             }
         },
+        develop: {
+            server: {
+                file: './test/server.js',
+                nodeArgs: ['--debug'],
+                env: { NODE_ENV: 'development', PORT: 8000 }
+            }
+        },
         mocha: {
             options : {
                 run : true
             },
             test: {
-                src: ['test/test.html'],
+                src: ['test/index.html']
+            }
+        },
+        watch: {
+            options : {
+                spawn : false
+            },
+            scripts: {
+                files: ['src/*.js', 'test/*.js'],
+                tasks: ['browserify', 'develop']
+            }
+        },
+        open : {
+            test : {
+                path: 'test/index.html',
+                app: 'Google Chrome'
             }
         }
     });
 
+    grunt.registerTask('dev', [
+        'jshint',
+        'browserify',
+        'develop',
+        'open:test',
+        'watch'
+    ]);
+
     grunt.registerTask('test', [
         'jshint',
         'browserify',
+        'develop',
         'mocha'
     ]);
 
@@ -64,3 +95,4 @@ module.exports = function (grunt) {
         'test',
         'bump'
     ]);
+};
