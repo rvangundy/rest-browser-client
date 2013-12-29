@@ -8,7 +8,7 @@ require('./shim-function.bind');
 describe('Client', function () {
 
     describe('get', function() {
-        it('Performs a basic get operation', function (ok) {
+        it('Performs a basic GET operation', function (ok) {
             var client = rest('http://localhost:8000');
             client.get(function(req) {
                 assert.equal(req.response, 'test');
@@ -41,7 +41,7 @@ describe('Client', function () {
     });
 
     describe('post', function() {
-        it('Posts a message and gets the same response', function(ok) {
+        it('Performs a basic POST operation and gets the same response', function(ok) {
             var client  = rest('http://localhost:8000/post');
             var message = { message : 'this is a test' };
 
