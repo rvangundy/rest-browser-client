@@ -26,6 +26,16 @@ function getArgNames (func) {
     return result;
 }
 
+/**
+ * Determines if the passed argument is a function
+ * @param  {Variant}  functionToCheck
+ * @return {Boolean}                 Whether the passed argument is a function
+ */
+function isFunction(functionToCheck) {
+    var getType = {};
+    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
+
 /***********************
  *  Callback Handling  *
  ***********************/
@@ -103,7 +113,7 @@ function handleMiddleware(request) {
  * @param {XMLHttpRequest} req An xhr object
  */
 function errorHandler(req, next) {
-    if (req.readyState === 4 && request.status >= 400) {
+    if (req.readyState === 4 && (req.status >= 400 || !req.status)) {
         next(req.statusText);
     } else {
         next();
@@ -133,44 +143,61 @@ function use(/* arguments */) {
 }
 
 /**
- * Performs an HTTP GET request
- * @param {String} path The path to the API based on this client's base URL
+ * Creates the specified XHR method.
+ * @param {String} method The XHR method to use, e.g. GET, POST, etc.
  */
-function get(/* arguments */) {
-    var series;
-    var callbacks = [];
-    var url       = this.url;
-    var request   = amendRequest(new XMLHttpRequest(), url);
-    var username  = this.username;
-    var password  = this.password;
+function createXHRMethod(method) {
+    method = method.toUpperCase();
 
-    // Sort arguments in to paths and callbacks
-    for (var i = 0, len = arguments.length; i < len; i += 1) {
-        if (typeof arguments[i] === 'string') { url += arguments[i]; }
-        else { callbacks.push(arguments[i]); }
-    }
+    return function sendXHR(/* arguments */) {
+        var arg, series;
+        var callbacks = [];
+        var url       = this.url;
+        var request   = amendRequest(new XMLHttpRequest(), url);
+        var username  = this.username;
+        var password  = this.password;
 
-    // Add an error handler and create a series call
-    callbacks.splice(0, errorHandler);
-    series = createSeries(callbacks);
+        // Sort arguments in to paths, data, and callbacks
+        for (var i = 0, len = arguments.length; i < len; i += 1) {
+            arg = arguments[i];
 
-    // Open the request, using authentication if available
-    if (username && password) {
-        request.open('GET', url, true, username, password);
-    } else {
-        request.open('GET', url);
-    }
+            // Create the URL
+            if (typeof arg === 'string' && arg.indexOf('/') === 0) {
+                url += arg;
+            }
 
-    // Pass through available middleware
-    handleMiddleware.call(this, request);
+            // Build up callbacks
+            else if (isFunction(arg)) { callbacks.push(arg); }
 
-    request.onreadystatechange = function() {
-        if (request.readyState === 4) {
-            series(request);
+            // Build data
+            else {
+                request.data = arg;
+            }
         }
-    }.bind(this);
 
-    request.send(null);
+        // Add an error handler and create a series call
+        callbacks.splice(0, 0, errorHandler);
+        series = createSeries(callbacks);
+
+        // Open the request, using authentication if available
+        if (username && password) {
+            request.open(method, url, true, username, password);
+        } else {
+            request.open(method, url);
+        }
+
+        // Pass through available middleware
+        handleMiddleware.call(this, request);
+
+        // Beginning listening for callbacks
+        request.onreadystatechange = function() {
+            if (request.readyState === 4) {
+                series(request);
+            }
+        }.bind(this);
+
+        request.send(request.data);
+    };
 }
 
 /*****************
@@ -189,7 +216,8 @@ function Client(url, username, password) {
 
 Client.prototype = {
     use           : use,
-    get           : get,
+    get           : createXHRMethod('GET'),
+    post          : createXHRMethod('POST'),
     middleware    : null,
     url           : null,
     username      : null,
