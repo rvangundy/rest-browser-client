@@ -41,7 +41,8 @@ function isFunction(functionToCheck) {
  ***********************/
 
 /**
- * Determines if the passed function is an error handler
+ * Determines if the passed function is an error handler. An error handler
+ * is any function whose first argument is labeled 'err'.
  * @param {Function} func A function to check for error handling
  */
 function isErrorHandler(func) {
@@ -143,7 +144,8 @@ function use(/* arguments */) {
 }
 
 /**
- * Creates the specified XHR method.
+ * Creates the specified XHR method. This may be used to generate XHR VERBs in to the
+ * client.
  * @param {String} method The XHR method to use, e.g. GET, POST, etc.
  */
 function createXHRMethod(method) {
