@@ -17,11 +17,12 @@ describe('Client', function () {
         });
 
         it('Calls error middleware', function(ok) {
-            var message = 'some error';
             var client = rest('http://localhost:8000');
 
-            client.get('/error', function(err) {
-                assert.equal(err.status, 404);
+            client.get('/error', function() {
+                assert.ok(false, 'Skips normal calls');
+            },function(err) {
+                assert.ok(err instanceof Error);
                 ok();
             });
         });
@@ -36,6 +37,23 @@ describe('Client', function () {
             });
 
             client.get(function(){});
+        });
+    });
+
+    describe('post', function() {
+        it('Posts a message and gets the same response', function(ok) {
+            var client  = rest('http://localhost:8000/post');
+            var message = { message : 'this is a test' };
+
+            client.use(function(req) {
+                req.set('Content-Type', 'application/json');
+                if (typeof req.data !== 'string') { req.data = JSON.stringify(req.data); }
+            });
+
+            client.post(message, function(req) {
+                assert.deepEqual(JSON.parse(req.response), message);
+                ok();
+            });
         });
     });
 });
