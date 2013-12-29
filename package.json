@@ -1,7 +1,7 @@
 {
   "name": "rest-client",
   "version": "0.0.2",
-  "main": "rest-client.js",
+  "main": "src/rest-client.js",
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-contrib-jshint": "~0.6.0",
