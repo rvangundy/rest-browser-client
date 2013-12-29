@@ -22,6 +22,13 @@ module.exports = function (grunt) {
                 options : {
                     debug : true
                 }
+            },
+            release: {
+                src : ['src/rest-client.js'],
+                dest : 'index.js',
+                options : {
+                    standalone : ''
+                }
             }
         },
         bump: {
@@ -73,7 +80,7 @@ module.exports = function (grunt) {
 
     grunt.registerTask('dev', [
         'jshint',
-        'browserify',
+        'browserify:test',
         'develop',
         'open:test',
         'watch'
@@ -81,14 +88,14 @@ module.exports = function (grunt) {
 
     grunt.registerTask('test', [
         'jshint',
-        'browserify',
+        'browserify:test',
         'develop',
         'mocha'
     ]);
 
     grunt.registerTask('default', [
         'jshint',
-        'browserify'
+        'browserify:release'
     ]);
 
     grunt.registerTask('release', [
