@@ -1,6 +1,6 @@
 {
   "name": "rest-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "rest-client.js",
   "devDependencies": {
     "grunt": "~0.4.2",
