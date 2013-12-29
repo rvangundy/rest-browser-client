@@ -66,7 +66,8 @@ function Request(request, url) {
 Request.prototype = {
     get  : get,
     set  : set,
-    path : null
+    path : null,
+    data : null
 };
 
 /*************
