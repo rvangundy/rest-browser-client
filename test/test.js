@@ -72,3 +72,31 @@ describe('Response', function() {
         });
     });
 });
+
+describe('middleware', function() {
+    describe('json', function() {
+        it('Stringifies outgoing JSON', function(ok) {
+            var client = rest('http://localhost:8000/post');
+            var person = { first : 'Ben', last : 'Franklin' };
+
+            client.use(rest.json(), function(req){
+                assert.equal(req.body, JSON.stringify(person));
+                ok();
+            });
+
+            client.post(person);
+        });
+
+        it('Parses incoming JSON', function(ok) {
+            var client = rest('http://localhost:8000/json');
+            var person = { first : 'Ben', last : 'Franklin' };
+
+            client.use(rest.json());
+
+            client.get(function(req, res) {
+                assert.deepEqual(res.body, person);
+                ok();
+            });
+        });
+    });
+});

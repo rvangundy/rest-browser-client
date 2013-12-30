@@ -11,6 +11,12 @@ server.get('/', cors(), function(req, res) {
     res.send('test');
 });
 
+server.options('/json', cors());
+
+server.get('/json', cors(), function(req, res) {
+    res.json({ first : 'Ben', last : 'Franklin' });
+});
+
 server.get('/error', cors(), function(req, res) {
     res.status(404);
     res.send();
