@@ -78,6 +78,14 @@ client.use(function(req, res, next) {
 }, errHandler);
 ```
 
+It is also possible to register middleware for specific routes. In this case, all generic middleware registered without a particular path is also called.
+
+```javascript
+client.use('/path', function(req, res) {
+    // Only called on client.get('/path') or client.post('/path')
+});
+```
+
 ### client.get([path], callback)
 
 Sends an HTTP GET command to the server. When the response has been received, any callbacks passed will be called. Callbacks are similar to middleware, including the same arguments and error handling capabilities. If a path is included, it must be prefaced with a ```/``` and will be appended to the API URL specified when instantiating the client.
