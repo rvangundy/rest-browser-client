@@ -10,8 +10,8 @@ describe('Client', function () {
     describe('get', function() {
         it('Performs a basic GET operation', function (ok) {
             var client = rest('http://localhost:8000');
-            client.get(function(req) {
-                assert.equal(req.response, 'test');
+            client.get(function(req, res) {
+                assert.equal(res.body, 'test');
                 ok();
             });
         });
@@ -47,11 +47,26 @@ describe('Client', function () {
 
             client.use(function(req) {
                 req.set('Content-Type', 'application/json');
-                if (typeof req.data !== 'string') { req.data = JSON.stringify(req.data); }
+                if (typeof req.body !== 'string') { req.body = JSON.stringify(req.body); }
             });
 
-            client.post(message, function(req) {
-                assert.deepEqual(JSON.parse(req.response), message);
+            client.post(message, function(req, res) {
+                assert.deepEqual(JSON.parse(res.body), message);
+                ok();
+            });
+        });
+    });
+});
+
+describe('Response', function() {
+    describe('.is', function() {
+        it('Correctly determines mime-type', function(ok) {
+            var client = rest('http://localhost:8000');
+            client.get(function(req, res) {
+                assert.ok(res.is('text/*'));
+                assert.ok(res.is('html'));
+                assert.ok(res.is('text/html'));
+                assert.notOk(res.is('json'));
                 ok();
             });
         });
