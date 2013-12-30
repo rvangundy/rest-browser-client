@@ -1,6 +1,5 @@
-'use strict';
-
 module.exports = function() {
+    'use strict';
 
     return function json(req, res, next) {
         var reqBody = req.body;
