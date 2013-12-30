@@ -5,6 +5,7 @@
  ******************/
 
 var amendRequest = require('./Request');
+var Response     = require('./Response');
 
 /***************
  *  Utilities  *
@@ -75,7 +76,12 @@ function createSeries(callbacks) {
             // If no errors, try calling the next callback
             if (!error) {
                 try {
-                    callback.apply(null, args);
+                    if (isErrorHandler(callback)) {
+                        errArgs = [null].concat(args);
+                        callback.apply(null, errArgs);
+                    } else {
+                        callback.apply(null, args);
+                    }
                 } catch (e) {
                     next(e);
                 }
@@ -100,20 +106,20 @@ function createSeries(callbacks) {
  * Passes the request through available middleware
  * @param {XMLHttpRequest} request An xhr object prior to being sent
  */
-function handleMiddleware(request) {
+function handleMiddleware(request, response) {
     var series;
     var mw = this.middleware = this.middleware || [];
 
     series = createSeries(mw);
 
-    series(request);
+    series(request, response);
 }
 
 /**
  * Checks the status of the request and generates an error if not 200.
  * @param {XMLHttpRequest} req An xhr object
  */
-function errorHandler(req, next) {
+function errorHandler(req, res, next) {
     if (req.readyState === 4 && (req.status >= 400 || !req.status)) {
         next(req.statusText);
     } else {
@@ -158,6 +164,7 @@ function createXHRMethod(method) {
         var request   = amendRequest(new XMLHttpRequest(), url);
         var username  = this.username;
         var password  = this.password;
+        var response  = new Response(request);
 
         // Sort arguments in to paths, data, and callbacks
         for (var i = 0, len = arguments.length; i < len; i += 1) {
@@ -173,7 +180,7 @@ function createXHRMethod(method) {
 
             // Build data
             else {
-                request.data = arg;
+                request.body = arg;
             }
         }
 
@@ -189,16 +196,17 @@ function createXHRMethod(method) {
         }
 
         // Pass through available middleware
-        handleMiddleware.call(this, request);
+        handleMiddleware.call(this, request, response);
 
         // Beginning listening for callbacks
         request.onreadystatechange = function() {
             if (request.readyState === 4) {
-                series(request);
+                response.body = request.response;
+                series(request, response);
             }
         }.bind(this);
 
-        request.send(request.data);
+        request.send(request.body);
     };
 }
 
