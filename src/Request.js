@@ -67,7 +67,7 @@ Request.prototype = {
     get  : get,
     set  : set,
     path : null,
-    data : null
+    body : null
 };
 
 /*************
