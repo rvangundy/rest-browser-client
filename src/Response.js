@@ -35,12 +35,23 @@ function is(type) {
     return false;
 }
 
+/**
+ * Similar to client.use, except attaches calls to be used only when a response has been returned.
+ * This is useful for attaching functionality upfront as middleware by client.use, so that it may
+ * be left out of XHR request calls later.
+ * @param {Function} middleware A middleware function to use on a response
+ */
+function use(middleware) {
+    this.middleware.push(middleware);
+}
+
 /*****************
  *  Constructor  *
  *****************/
 
 function Response(request) {
     this.request = request;
+    this.middleware = [];
 }
 
 /***************
@@ -48,9 +59,11 @@ function Response(request) {
  ***************/
 
 Response.prototype = {
-    is      : is,
-    body    : null,
-    request : null
+    is         : is,
+    use        : use,
+    body       : null,
+    request    : null,
+    middleware : null
 };
 
 /*************

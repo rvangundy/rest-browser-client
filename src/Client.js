@@ -105,6 +105,7 @@ function createSeries(callbacks) {
 /**
  * Passes the request through available middleware
  * @param {XMLHttpRequest} request An xhr object prior to being sent
+ * @param {Response} response A response object prior to being received
  */
 function handleMiddleware(request, response) {
     var series;
@@ -184,10 +185,6 @@ function createXHRMethod(method) {
             }
         }
 
-        // Add an error handler and create a series call
-        callbacks.splice(0, 0, errorHandler);
-        series = createSeries(callbacks);
-
         // Open the request, using authentication if available
         if (username && password) {
             request.open(method, url, true, username, password);
@@ -198,9 +195,14 @@ function createXHRMethod(method) {
         // Pass through available middleware
         handleMiddleware.call(this, request, response);
 
+        // Introduce errHandler and middleware from response
+        callbacks = response.middleware.concat(callbacks);
+        callbacks.splice(0, 0, errorHandler);
+
         // Beginning listening for callbacks
         request.onreadystatechange = function() {
             if (request.readyState === 4) {
+                series = createSeries(callbacks);
                 response.body = request.response;
                 series(request, response);
             }
