@@ -38,6 +38,21 @@ describe('Client', function () {
 
             client.get(function(){});
         });
+
+        it('Calls path-specific middleware', function(ok) {
+            var client = rest('http://localhost:8000');
+            client.use(function(req, res, next) {
+                req._test = 'works';
+                next();
+            });
+
+            client.use('/json', function(req) {
+                assert.equal(req._test, 'works');
+                ok();
+            });
+
+            client.get('/json', function(){});
+        });
     });
 
     describe('post', function() {
