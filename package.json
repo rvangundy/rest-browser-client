@@ -1,5 +1,5 @@
 {
-  "name": "rest-client",
+  "name": "rest-browser-client",
   "version": "0.0.2",
   "main": "src/rest-client.js",
   "devDependencies": {
@@ -19,6 +19,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rvangundy/rest-client.git"
+    "url": "https://github.com/rvangundy/rest-browser-client.git"
   }
 }
