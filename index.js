@@ -106,6 +106,7 @@ function createSeries(callbacks) {
 /**
  * Passes the request through available middleware
  * @param {XMLHttpRequest} request An xhr object prior to being sent
+ * @param {Response} response A response object prior to being received
  */
 function handleMiddleware(request, response) {
     var series;
@@ -185,10 +186,6 @@ function createXHRMethod(method) {
             }
         }
 
-        // Add an error handler and create a series call
-        callbacks.splice(0, 0, errorHandler);
-        series = createSeries(callbacks);
-
         // Open the request, using authentication if available
         if (username && password) {
             request.open(method, url, true, username, password);
@@ -199,9 +196,14 @@ function createXHRMethod(method) {
         // Pass through available middleware
         handleMiddleware.call(this, request, response);
 
+        // Introduce errHandler and middleware from response
+        callbacks = response.middleware.concat(callbacks);
+        callbacks.splice(0, 0, errorHandler);
+
         // Beginning listening for callbacks
         request.onreadystatechange = function() {
             if (request.readyState === 4) {
+                series = createSeries(callbacks);
                 response.body = request.response;
                 series(request, response);
             }
@@ -358,12 +360,23 @@ function is(type) {
     return false;
 }
 
+/**
+ * Similar to client.use, except attaches calls to be used only when a response has been returned.
+ * This is useful for attaching functionality upfront as middleware by client.use, so that it may
+ * be left out of XHR request calls later.
+ * @param {Function} middleware A middleware function to use on a response
+ */
+function use(middleware) {
+    this.middleware.push(middleware);
+}
+
 /*****************
  *  Constructor  *
  *****************/
 
 function Response(request) {
     this.request = request;
+    this.middleware = [];
 }
 
 /***************
@@ -371,9 +384,11 @@ function Response(request) {
  ***************/
 
 Response.prototype = {
-    is      : is,
-    body    : null,
-    request : null
+    is         : is,
+    use        : use,
+    body       : null,
+    request    : null,
+    middleware : null
 };
 
 /*************
@@ -385,10 +400,54 @@ module.exports = Response;
 },{}],4:[function(require,module,exports){
 'use strict';
 
-var Client = require('./Client');
+module.exports = function() {
 
-module.exports = function(path, username, password) {
-    return new Client(path, username, password);
+    return function json(req, res, next) {
+        var reqBody = req.body;
+
+        // Convert outgoing javascript object to JSON and prepare header
+        if (req.readyState === 1) {
+            if (reqBody && typeof reqBody !== 'string') { req.body = JSON.stringify(reqBody); }
+            req.set('Content-Type', 'application/json');
+        }
+
+        // Add JSON parsing to response
+        res.use(function(req, res, next) {
+            var resBody = res.body;
+            if (resBody && res.is('json') && typeof resBody === 'string') { res.body = JSON.parse(resBody); }
+            next();
+        });
+
+        next();
+    };
 };
 
-},{"./Client":1}]},{},[4])
+},{}],5:[function(require,module,exports){
+'use strict';
+
+var Client = require('./Client');
+var jsonParser = require('./middleware-json');
+
+/**
+ * A library interface function for creating a new REST interface
+ * @param {String} url The location where the REST API resides
+ * @param {String} username A username for an authenticated REST API
+ * @param {String} password A password for an authenticated REST API
+ */
+function rest(url, username, password) {
+    return new Client(url, username, password);
+}
+
+/***************
+ *  Middlware  *
+ ***************/
+
+rest.json = jsonParser;
+
+/*************
+ *  Exports  *
+ *************/
+
+module.exports = rest;
+
+},{"./Client":1,"./middleware-json":4}]},{},[5])
