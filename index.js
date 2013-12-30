@@ -6,6 +6,7 @@
  ******************/
 
 var amendRequest = require('./Request');
+var Response     = require('./Response');
 
 /***************
  *  Utilities  *
@@ -76,7 +77,12 @@ function createSeries(callbacks) {
             // If no errors, try calling the next callback
             if (!error) {
                 try {
-                    callback.apply(null, args);
+                    if (isErrorHandler(callback)) {
+                        errArgs = [null].concat(args);
+                        callback.apply(null, errArgs);
+                    } else {
+                        callback.apply(null, args);
+                    }
                 } catch (e) {
                     next(e);
                 }
@@ -101,20 +107,20 @@ function createSeries(callbacks) {
  * Passes the request through available middleware
  * @param {XMLHttpRequest} request An xhr object prior to being sent
  */
-function handleMiddleware(request) {
+function handleMiddleware(request, response) {
     var series;
     var mw = this.middleware = this.middleware || [];
 
     series = createSeries(mw);
 
-    series(request);
+    series(request, response);
 }
 
 /**
  * Checks the status of the request and generates an error if not 200.
  * @param {XMLHttpRequest} req An xhr object
  */
-function errorHandler(req, next) {
+function errorHandler(req, res, next) {
     if (req.readyState === 4 && (req.status >= 400 || !req.status)) {
         next(req.statusText);
     } else {
@@ -159,6 +165,7 @@ function createXHRMethod(method) {
         var request   = amendRequest(new XMLHttpRequest(), url);
         var username  = this.username;
         var password  = this.password;
+        var response  = new Response(request);
 
         // Sort arguments in to paths, data, and callbacks
         for (var i = 0, len = arguments.length; i < len; i += 1) {
@@ -174,7 +181,7 @@ function createXHRMethod(method) {
 
             // Build data
             else {
-                request.data = arg;
+                request.body = arg;
             }
         }
 
@@ -190,16 +197,17 @@ function createXHRMethod(method) {
         }
 
         // Pass through available middleware
-        handleMiddleware.call(this, request);
+        handleMiddleware.call(this, request, response);
 
         // Beginning listening for callbacks
         request.onreadystatechange = function() {
             if (request.readyState === 4) {
-                series(request);
+                response.body = request.response;
+                series(request, response);
             }
         }.bind(this);
 
-        request.send(request.data);
+        request.send(request.body);
     };
 }
 
@@ -233,7 +241,7 @@ Client.prototype = {
 
 module.exports = Client;
 
-},{"./Request":2}],2:[function(require,module,exports){
+},{"./Request":2,"./Response":3}],2:[function(require,module,exports){
 'use strict';
 
 /***************
@@ -303,7 +311,7 @@ Request.prototype = {
     get  : get,
     set  : set,
     path : null,
-    data : null
+    body : null
 };
 
 /*************
@@ -315,10 +323,72 @@ module.exports = Request;
 },{}],3:[function(require,module,exports){
 'use strict';
 
+/**
+ * Determines if the specified mime-type is included in the Content-Type header.
+ * @param {String} type A content type to match
+ * @return {Boolean} True if a matching mime-type is found
+ */
+function is(type) {
+    var items;
+    var contentType = this.request.getResponseHeader('Content-Type');
+
+    if (!contentType) { return false; }
+
+    items = contentType.split(';');
+
+    for (var i = 0, len = items.length; i < len; i += 1) {
+        contentType = items[i];
+
+        if (contentType.indexOf('/') < 0) { continue; }
+
+        // Check explicit match if a '/' is included without a wildcard
+        if (type.indexOf('/') > -1 && type.indexOf('/*') < 0) {
+            return contentType.toLowerCase() === type.toLowerCase();
+        }
+
+        // Check wildcard matching
+        if (type.indexOf('/*') > -1) {
+            return contentType.split('/')[0].toLowerCase() === type.split('/')[0].toLowerCase();
+        }
+
+        // Check subtype matching
+        return contentType.split('/')[1].toLowerCase() === type.toLowerCase();
+    }
+
+    return false;
+}
+
+/*****************
+ *  Constructor  *
+ *****************/
+
+function Response(request) {
+    this.request = request;
+}
+
+/***************
+ *  Prototype  *
+ ***************/
+
+Response.prototype = {
+    is      : is,
+    body    : null,
+    request : null
+};
+
+/*************
+ *  Exports  *
+ *************/
+
+module.exports = Response;
+
+},{}],4:[function(require,module,exports){
+'use strict';
+
 var Client = require('./Client');
 
 module.exports = function(path, username, password) {
     return new Client(path, username, password);
 };
 
-},{"./Client":1}]},{},[3])
+},{"./Client":1}]},{},[4])
