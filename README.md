@@ -51,7 +51,7 @@ The following example demonstrates some middleware for sending JSON to the serve
 ```javascript
 client.use(function(req, res, next), {
     req.set('Content-Type', 'application/json');
-    if (typeof req.data !== 'string') { req.data = JSON.stringify(req.data); }
+    if (typeof req.body !== 'string') { req.body = JSON.stringify(req.body); }
     next();
 });
 ```
@@ -108,3 +108,54 @@ client.post('/user_submit', { first : 'Ben', last : 'Franklin' }, function(err, 
     if (err) { console.log('An error occurred'); }
 });
 ```
+
+# Request
+
+The request object passed in to the middleware and callbacks is a modified XMLHttpRequest object. The following properties and methods have been added:
+
+## Properties
+
+### request.path
+
+The full path to the requested resource. If a remote URL was specified on client instantiation, this includes the domain.
+
+### request.body
+
+The data that is sent to the server on a POST command. The body may be modified by various middleware.
+
+## Methods
+
+### request.get(key)
+
+A shortcut for request.getResponseHeader
+
+### request.set(key, value)
+
+A shortcut for request.setRequestHeader
+
+# Response
+
+The response object contains properties and methods convenient for handling data returned from a server.
+
+## Properties
+
+### response.body
+
+The returned data. By default, response.body is the same value as request.response.  Callbacks may be used to parse the response body appropriately.
+
+## Methods
+
+## response.is(type)
+
+Determines if the response data matches the specified type.
+
+```javascript
+// Response is text/html
+res.is('text/*') // true
+res.is('html') // true
+res.is('text/html') // true
+res.is('json') // false
+
+```
+
+
