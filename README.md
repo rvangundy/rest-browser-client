@@ -158,4 +158,60 @@ res.is('json') // false
 
 ```
 
+## response.use(middleware)
+
+In Express.js, middleware is used between a request and a response on the server-side. In a client, XMLHttpRequests are sent then asynchronously received. Passing 'middleware' using client.use() only prepares middleware for an outgoing request. Incoming responses are passed through callbacks attached with client.get() or client.post(). The response.use method makes it possible to assign middleware at client.use() that can also be called on a response.
+
+Any middlware added by response.use() is called *before* other callbacks assigned by client.get(), etc.
+
+For example, here is the json-parsing middleware that stringifies outgoing JSON and parses incoming JSON:
+
+```javascript
+'use strict';
+
+module.exports = function() {
+
+    return function json(req, res, next) {
+        var reqBody = req.body;
+
+        // Convert outgoing javascript object to JSON and prepare header
+        if (req.readyState === 1) {
+            if (reqBody && typeof reqBody !== 'string') { req.body = JSON.stringify(reqBody); }
+            req.set('Content-Type', 'application/json');
+        }
+
+        // Add JSON parsing to response
+        res.use(function(req, res, next) {
+            var resBody = res.body;
+            if (resBody && res.is('json') && typeof resBody === 'string') { res.body = JSON.parse(resBody); }
+            next();
+        });
+
+        next();
+    };
+};
+```
+
+# Middleware
+
+A set of basic middleware is available on the main library function, ```var rest = require('rest-browser-client');```.
+
+## rest.json()
+
+Stringifies outgoing JSON and parses incoming JSON.
+
+```javascript
+client.use(rest.json(), function(req, res) {
+    var str = req.body; // <-- This is now a JSON string
+});
+
+client.post({ first : 'Ben', last : 'Franklin'});
+
+client.get(function(req, res){
+    var obj = res.body; // <-- This is now a javascript object
+});
+```
+
+
+
 
