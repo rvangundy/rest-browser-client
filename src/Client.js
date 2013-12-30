@@ -107,9 +107,11 @@ function createSeries(callbacks) {
  * @param {XMLHttpRequest} request An xhr object prior to being sent
  * @param {Response} response A response object prior to being received
  */
-function handleMiddleware(request, response) {
+function handleMiddleware(path, request, response) {
     var series;
-    var mw = this.middleware = this.middleware || [];
+    var all    = this.middleware['*'];
+    var pathMw = path ? this.middleware[path] || [] : [];
+    var mw     = all.concat(pathMw);
 
     series = createSeries(mw);
 
@@ -138,13 +140,24 @@ function errorHandler(req, res, next) {
  */
 function use(/* arguments */) {
     var arg;
-    var middleware = this.middleware = this.middleware || [];
+    var args = slice.call(arguments, 0);
+    var middleware = this.middleware;
+    var all = middleware['*'];
 
-    for (var i = 0, len = arguments.length; i < len; i += 1) {
-        arg = arguments[i];
+    // Establish path-specific middleware
+    if (typeof args[0] === 'string') {
+        arg = args.shift();
+        middleware = middleware[arg] = middleware[arg] || [];
+    } else {
+        middleware = all;
+    }
+
+    // Collect middleware
+    for (var i = 0, len = args.length; i < len; i += 1) {
+        arg = args[i];
 
         // Do not use same middleware twice
-        if (middleware.indexOf(arg) >= 0) { return; }
+        if (middleware.indexOf(arg) >= 0 || all.indexOf(arg) >= 0) { return; }
 
         middleware.push(arg);
     }
@@ -159,7 +172,7 @@ function createXHRMethod(method) {
     method = method.toUpperCase();
 
     return function sendXHR(/* arguments */) {
-        var arg, series;
+        var arg, series, path;
         var callbacks = [];
         var url       = this.url;
         var request   = amendRequest(new XMLHttpRequest(), url);
@@ -173,6 +186,7 @@ function createXHRMethod(method) {
 
             // Create the URL
             if (typeof arg === 'string' && arg.indexOf('/') === 0) {
+                path = arg;
                 url += arg;
             }
 
@@ -193,7 +207,7 @@ function createXHRMethod(method) {
         }
 
         // Pass through available middleware
-        handleMiddleware.call(this, request, response);
+        handleMiddleware.call(this, path, request, response);
 
         // Introduce errHandler and middleware from response
         callbacks = response.middleware.concat(callbacks);
@@ -220,6 +234,10 @@ function Client(url, username, password) {
     this.url      = url || '';
     this.username = username;
     this.password = password;
+
+    this.middleware = {
+        '*' : []
+    };
 }
 
 /***************
