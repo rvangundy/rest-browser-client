@@ -1,6 +1,6 @@
 {
   "name": "rest-browser-client",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "src/rest-client.js",
   "devDependencies": {
     "grunt": "~0.4.2",
