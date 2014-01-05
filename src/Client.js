@@ -199,7 +199,7 @@ function createXHRMethod(method) {
     return function sendXHR(/* arguments */) {
         var arg, series, path, data;
         var callbacks = [];
-        var url       = this.url;
+        var url       = this.url.replace(/\/$/, ''); // remove trailing slashes
         var request   = amendRequest(new XMLHttpRequest(), url);
         var username  = this.username;
         var password  = this.password;
@@ -223,9 +223,6 @@ function createXHRMethod(method) {
                 data = request.body = arg;
             }
         }
-
-        // Remove unwanted fragments from URL
-        url = url.replace(/\/\//, '/');
 
         // Convert object to query parameters if using the GET method
         if (method === 'GET') {
