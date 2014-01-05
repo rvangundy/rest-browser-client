@@ -225,7 +225,7 @@ function createXHRMethod(method) {
         }
 
         // Remove unwanted fragments from URL
-        url = url.replace('//', '/');
+        url = url.replace(/\/\//, '/');
 
         // Convert object to query parameters if using the GET method
         if (method === 'GET') {
