@@ -10,7 +10,8 @@ describe('Client', function () {
     describe('get', function() {
         it('Performs a basic GET operation', function (ok) {
             var client = rest('http://localhost:8000');
-            client.get(function(req, res) {
+
+            client.get({ name : 'test'}, function(req, res) {
                 assert.equal(res.body, 'test');
                 ok();
             });

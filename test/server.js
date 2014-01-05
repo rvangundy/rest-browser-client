@@ -8,7 +8,11 @@ var cors    = require('cors');
 server.use(express.bodyParser());
 
 server.get('/', cors(), function(req, res) {
-    res.send('test');
+    if (req.query.name) {
+        res.send(req.query.name);
+    } else {
+        res.send('anything');
+    }
 });
 
 server.options('/json', cors());

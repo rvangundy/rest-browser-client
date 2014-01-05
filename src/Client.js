@@ -15,6 +15,11 @@ var slice = Array.prototype.slice;
 
 var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 
+// isArray polyfill
+Array.isArray = Array.isArray || (Array.isArray = function(a){
+    return '' + a !== a && {}.toString.call(a) === '[object Array]';
+});
+
 /**
  * Gets the argument names defined on a particular function
  * @param  {Function} func The function to query
@@ -35,6 +40,26 @@ function getArgNames (func) {
 function isFunction(functionToCheck) {
     var getType = {};
     return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
+
+/**
+ * Converts an object in to a string of query parameters
+ * @param {Object} obj An object consisting of query parameters
+ */
+function toQueryParameters(obj) {
+    var params = [];
+
+    if (!obj) { return ''; }
+
+    if (obj === Object(obj) && !Array.isArray(obj)) {
+        for (var j in obj) {
+            params.push(j + '=' + obj[j]);
+        }
+
+        return '?' + params.join('&');
+    } else {
+        return '';
+    }
 }
 
 /***********************
@@ -172,7 +197,7 @@ function createXHRMethod(method) {
     method = method.toUpperCase();
 
     return function sendXHR(/* arguments */) {
-        var arg, series, path;
+        var arg, series, path, data, params;
         var callbacks = [];
         var url       = this.url;
         var request   = amendRequest(new XMLHttpRequest(), url);
@@ -195,8 +220,14 @@ function createXHRMethod(method) {
 
             // Build data
             else {
-                request.body = arg;
+                data = request.body = arg;
             }
+        }
+
+        // Convert object to query parameters if using the GET method
+        if (method === 'GET') {
+            url += toQueryParameters(data);
+            request.body = null;
         }
 
         // Open the request, using authentication if available
@@ -220,7 +251,7 @@ function createXHRMethod(method) {
                 response.body = request.response;
                 series(request, response);
             }
-        }.bind(this);
+        };
 
         request.send(request.body);
     };
